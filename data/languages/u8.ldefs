@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<language_definitions>
+  <language processor="U8"
+            endian="little"
+            size="16"
+            variant="default"
+            version="1.0"
+            slafile="u8.sla"
+            processorspec="u8.pspec"
+            id="u8:LE:16:default">
+    <description>U8 Language Module</description>
+    <compiler name="default" spec="u8.cspec" id="default"/>
+  </language>
+</language_definitions>

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<processor_spec>
+  <programcounter register="PC"/>
+<!--
+  <register_data>
+  </register_data>
+-->
+  <default_symbols>
+    <symbol name="spinit" address="code:0000" entry="false"/>
+    <symbol name="start"  address="code:0002" entry="true"  type="code_ptr"/>
+    <symbol name="brk"    address="code:0004" entry="true"  type="code_ptr"/>
+    <symbol name="nmice"  address="code:0006" entry="true"  type="code_ptr"/>
+    <symbol name="nmi"    address="code:0008" entry="true"  type="code_ptr"/>
+  </default_symbols>
+
+	<segmentop space="data" userop="segment" farpointer="yes">
+		<pcode>
+			<input name="base"  size="1"/>
+			<input name="inner" size="2"/>
+			<output name="res"  size="3"/>
+			<body><![CDATA[
+				res = (zext(base) << 16) + zext(inner);
+			]]></body>
+		</pcode>
+		
+		<!--<constresolve>
+			<register name="DS"/>
+		</constresolve>-->
+		
+	</segmentop>
+</processor_spec>

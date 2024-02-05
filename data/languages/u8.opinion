@@ -1,0 +1,5 @@
+<opinions>
+    <constraint loader="nX-U8/100" compilerSpecID="default">
+    	<constraint primary="1" processor="U8" size="16" />
+    </constraint>
+</opinions>

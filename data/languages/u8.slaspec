@@ -1,0 +1,412 @@
+# SLEIGH specification file for LAPIS nX-U16
+
+define endian=little;
+define alignment=2;
+
+define space data     type=ram_space      size=3;
+define space register type=register_space size=1;
+define space code     type=ram_space      size=3 default;
+
+define register offset=0x00 size=1 [ R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 R10 R11 R12 R13 R14 R15 ];
+define register offset=0x00 size=2 [ ER0 ER2 ER4 ER6 ER8 ER10 ER12 ER14 ];
+define register offset=0x00 size=4 [ XR0 XR4 XR8 XR12 ];
+define register offset=0x00 size=8 [ QR0 QR8 ];
+define register offset=0x10 size=1 [ CR0 CR1 CR2 CR3 CR4 CR5 CR6 CR7 CR8 CR9 CR10 CR11 CR12 CR13 CR14 CR15 ];
+define register offset=0x10 size=2 [ CER0 CER2 CER4 CER6 CER8 CER10 CER12 CER14 ];
+define register offset=0x10 size=4 [ CXR0 CXR4 CXR8 CXR12 ];
+define register offset=0x10 size=8 [ CQR0 CQR8 ];
+define register offset=0x20 size=2 [ SP EA ];
+define register offset=0x30 size=3 [ PC LR ELR1 ELR2 ELR3 ];
+define register offset=0x40 size=1 [ PSW EPSW1 EPSW2 EPSW3 ];
+define register offset=0x50 size=4 contextreg;
+
+@define C_flag "PSW[7,1]"
+@define Z_flag "PSW[6,1]"
+@define S_flag "PSW[5,1]"
+@define OV_flag "PSW[4,1]"
+@define MIE_flag "PSW[3,1]"
+@define HC_flag "PSW[2,1]"
+@define ELEVEL "PSW[0,2]"
+
+define context contextreg
+	phase   = (0,0) noflow
+	dsr     = (1,2) noflow
+	Rdsr    = (3,6) noflow
+	imm8dsr = (3,10) noflow
+	comma   = (11,11) noflow
+;
+
+define token opcode (16)
+	op12_4     = (12,15)
+	op11_1     = (11,11)
+	op10_1     = (10,10)
+	op9_3      = (9,11)
+	op9_1      = (9,9)
+	op8_4      = (8,11)
+	op8_1      = (8,8)
+	op7_1      = (7,7)
+	op6_1      = (6,6)
+	op5_3      = (5,7)
+	op5_2      = (5,6)
+	op4_4      = (4,7)
+	op4_1      = (4,4)
+	op3_1      = (3,3)
+	op2_2      = (2,3)
+	op1_3      = (1,3)
+	op1_2      = (1,2)
+	op1_1      = (1,1)
+	op0_16     = (0,15)
+	op0_4      = (0,3)
+	op0_3      = (0,2)
+	op0_1      = (0,0)
+
+	Rn         = (8,11)
+	ERn        = (8,11)
+	XRn        = (8,11)
+	QRn        = (8,11)
+	Rprev      = (8,11)
+	Rnext      = (8,11)
+	Rm         = (4,7)
+	ERm        = (4,7)
+	XRm        = (4,7)
+	QRm        = (4,7)
+
+	CRn         = (8,11)
+	CERn        = (8,11)
+	CXRn        = (8,11)
+	CQRn        = (8,11)
+	CRm         = (4,7)
+
+	imm8       = (0,7)
+	imm6       = (0,5)
+	imm3       = (4,6)
+	simm8      = (0,7) signed
+	simm7      = (0,6) signed
+	simm6      = (0,5) signed
+
+	t52size    = (5,6)
+	t12size    = (1,2)
+
+	orMask     = (4,6)
+	andMask    = (4,6)
+;
+
+define token operand (16)
+	imm16      = (0,15)
+;
+
+attach variables [ Rn Rm Rdsr ] [ R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 R10 R11 R12 R13 R14 R15 ];
+attach variables [ ERn ERm ] [ ER0 _ ER2 _ ER4 _ ER6 _ ER8 _ ER10 _ ER12 _ ER14 _ ];
+attach variables XRn [ XR0 _ _ _ XR4 _ _ _ XR8 _ _ _ XR12 _ _ _ ];
+attach variables QRn [ QR0 _ _ _ _ _ _ _ QR8 _ _ _ _ _ _ _ ];
+attach variables Rprev [ R15 R0 R1 R2 R3 R4 R5 R6 R7 R8 R9 R10 R11 R12 R13 R14 ];
+attach variables Rnext [ R1 R2 R3 R4 R5 R6 R7 R8 R9 R10 R11 R12 R13 R14 R15 R0 ];
+attach variables [ CRn CRm ] [ CR0 CR1 CR2 CR3 CR4 CR5 CR6 CR7 CR8 CR9 CR10 CR11 CR12 CR13 CR14 CR15 ];
+attach variables CERn [ CER0 _ CER2 _ CER4 _ CER6 _ CER8 _ CER10 _ CER12 _ CER14 _ ];
+attach variables CXRn [ CXR0 _ _ _ CXR4 _ _ _ CXR8 _ _ _ CXR12 _ _ _ ];
+attach variables CQRn [ CQR0 _ _ _ _ _ _ _ CQR8 _ _ _ _ _ _ _ ];
+attach values orMask [ 0x01 0x02 0x04 0x08 0x10 0x20 0x40 0x80 ];
+attach values andMask [ 0xFE 0xFD 0xFB 0xF7 0xEF 0xDF 0xBF 0x7F ];
+attach values [ t12size t52size ] [ 1 2 4 8 ];
+
+################################################################
+# Psuedo Instructions
+################################################################
+
+define pcodeop segment;
+
+################################################################
+# Macros
+################################################################
+
+macro affectZS(result) {
+	$(Z_flag) = result == 0;
+	$(S_flag) = result s< 0;
+}
+
+macro affectAdd(x, y, result) {
+	$(C_flag) = carry(x, y);
+	affectZS(result);
+	$(OV_flag) = scarry(x, y);
+	$(HC_flag) = carry(x << 4, y << 4);
+}
+
+macro affectAddC(x, y, c, result) {
+	local z = x + y;
+	$(C_flag) = carry(x, y) || carry(z, c);
+	affectZS(result);
+	$(OV_flag) = scarry(x, y) ^^ scarry(z, c);
+	$(HC_flag) = carry(x << 4, y << 4) || carry(z << 4, c << 4);
+}
+
+macro affectSub(x, y, result) {
+	$(C_flag) = x < y;
+	affectZS(result);
+	$(OV_flag) = sborrow(x, y);
+	$(HC_flag) = (x << 4) < (y << 4);
+}
+
+macro affectSubC(x, y, c, result) {
+	local z = x - y;
+	$(C_flag) = (x < y) || (z < c);
+	affectZS(result);
+	$(OV_flag) = sborrow(x, y) ^^ sborrow(z, c);
+	$(HC_flag) = (x << 4) < (y << 4) || (z << 4) < (c << 4);
+}
+
+macro affectNeg(result) {
+	$(C_flag) = result != 0;
+	affectZS(result);
+	$(OV_flag) = result == 0x80;
+	$(HC_flag) = (result << 4) != 0;
+}
+
+################################################################
+
+cc: "GE"  is op8_4=0x0 {c = !$(C_flag); export c;}
+cc: "LT"  is op8_4=0x1 {c = $(C_flag); export c;}
+cc: "GT"  is op8_4=0x2 {c = !$(C_flag) && !$(Z_flag); export c;}
+cc: "LE"  is op8_4=0x3 {c = $(C_flag) || $(Z_flag); export c;}
+cc: "GES" is op8_4=0x4 {c = $(S_flag) == $(OV_flag); export c;}
+cc: "LTS" is op8_4=0x5 {c = $(S_flag) != $(OV_flag); export c;}
+cc: "GTS" is op8_4=0x6 {c = !$(Z_flag) || ($(S_flag) == $(OV_flag)); export c;}
+cc: "LES" is op8_4=0x7 {c = $(Z_flag) || ($(S_flag) != $(OV_flag)); export c;}
+cc: "NE"  is op8_4=0x8 {c = !$(Z_flag); export c;}
+cc: "EQ"  is op8_4=0x9 {c = $(Z_flag); export c;}
+cc: "NV"  is op8_4=0xA {c = !$(OV_flag); export c;}
+cc: "OV"  is op8_4=0xB {c = $(OV_flag); export c;}
+cc: "PS"  is op8_4=0xC {c = !$(S_flag); export c;}
+cc: "NS"  is op8_4=0xD {c = $(S_flag); export c;}
+
+################################################################
+
+prefix:          is dsr=0 {z:1 = 0; export z;}
+prefix: Rdsr:    is dsr=1 & Rdsr {export Rdsr;}
+prefix: imm8dsr: is dsr=2 & imm8dsr {export imm8dsr;}
+prefix: "DSR:"   is dsr=3 {z = *[data]:1 (0xF000:3); export z;}
+
+eaEA:  prefix^"[EA]" is prefix {ea:3 = segment(prefix,EA); export ea;}
+
+eaLST: prefix^[ERm]       is op2_2=0 & op4_1=0 & prefix & ERm {ea:3 = segment(prefix,ERm); export ea;}
+eaLST: prefix^imm16       is op2_2=0 & op4_4=0x1 & prefix; imm16 {ea:3 = segment(prefix,imm16:2); export ea;}
+eaLST: eaEA               is op3_1=0 & op4_4=0x3 & eaEA {export eaEA;}
+eaLST: prefix^"[EA+]"     is op3_1=0 & op4_4=0x5 & op1_2=0 & prefix {ea:3 = segment(prefix,EA); EA = EA + 1; export ea;}
+eaLST: prefix^"[EA+]"     is op3_1=0 & op4_4=0x5 & t12size & prefix {ea:3 = segment(prefix,EA); EA = (EA + t12size) & 0xFFFE; export ea;}
+eaLST: prefix^imm16^[ERm] is op1_3=4 & prefix & ERm; imm16 {ea:3 = segment(prefix,ERm + imm16); export ea;}
+
+mLST: eaLST is eaLST {export *[data]:1 eaLST;}
+EmLST: eaLST is eaLST {export *[data]:2 eaLST;}
+XmLST: eaLST is eaLST {export *[data]:4 eaLST;}
+QmLST: eaLST is eaLST {export *[data]:8 eaLST;}
+
+eaFBP: prefix^simm6^"[BP]" is op6_1=0 & simm6 & prefix {ea:3 = segment(prefix,ER12 + simm6); export ea;}
+eaFBP: prefix^simm6^"[FP]" is op6_1=1 & simm6 & prefix {ea:3 = segment(prefix,ER14 + simm6); export ea;}
+
+rel8: reloc is simm8 [reloc = inst_next + 2 * simm8;] {export *:3 reloc;}
+
+eaB: imm20 is op1_1=0 & op4_4=0x0 & op8_4; imm16 [imm20 = (op8_4 << 16) | imm16;] {export *:3 imm20;}
+eaB: ERm   is op1_1=1 & op8_4=0x0 & ERm {seg:3 = inst_start >> 16; ea:3 = segment(seg:1,ERm); export *:3 ea;}
+
+eaMOV: eaEA           is op4_1=0 & eaEA {export eaEA;}
+eaMOV: prefix^"[EA+]" is op4_1=1 & op5_2=0 & prefix {ea:3 = segment(prefix,EA); EA = EA + 1; export ea;}
+eaMOV: prefix^"[EA+]" is op4_1=1 & t52size & prefix {ea:3 = segment(prefix,EA); EA = (EA + t52size) & 0xFFFE; export ea;}
+
+popR3: "PC"        is op9_1=1 {ea:3 = zext(SP); SP = SP + 4; return [*[data]:3 ea];}
+popR3:             is op9_1=0 {}
+popC2: ","^popR3   is op9_1=1 & comma=1 & popR3 {}
+popC2: popR3       is popR3 {}
+popR2: "PSW"^popC2 is op10_1=1 & popC2 [comma=1;] {ea:3 = zext(SP); SP = SP + 2; PSW = *[data] ea; build popC2;}
+popR2: popC2       is op10_1=0 & popC2 {}
+popC1: ","^popR2   is op10_1=1 & comma=1 & popR2 {}
+popC1: popR2       is popR2 {}
+popR1: "LR"^popC1  is op11_1=1 & popC1 [comma=1;] {ea:3 = zext(SP); SP = SP + 4; LR = *[data] ea; build popC1;}
+popR1: popC1       is op11_1=0 & popC1 {}
+popC0: ","^popR1   is op11_1=1 & comma=1 & popR1 {}
+popC0: popR1       is popR1 {}
+popR0: "EA"^popC0  is op8_1=1 & popC0 [comma=1;] {ea:3 = zext(SP); SP = SP + 2; EA = *[data] ea; build popC0;}
+popR0: popC0       is op8_1=0 & popC0 [comma=0;] {}
+
+pushR3: "EA"          is op8_1=1 {SP = SP - 2; ea:3 = zext(SP); *[data] ea = EA;}
+pushR3:               is op8_1=0 {}
+pushC2: ","^pushR3    is op8_1=1 & comma=1 & pushR3 {}
+pushC2: pushR3        is pushR3 {}
+pushR2: "LR"^pushC2   is op11_1=1 & pushC2 [comma=1;] {SP = SP - 4; ea:3 = zext(SP); *[data] ea = LR; build pushC2;}
+pushR2: pushC2        is op11_1=0 & pushC2 {}
+pushC1: ","^pushR2    is op11_1=1 & comma=1 & pushR2 {}
+pushC1: pushR2        is pushR2 {}
+pushR1: "EPSW"^pushC1 is op10_1=1 & pushC1 [comma=1;] {SP = SP - 2; ea:3 = zext(SP); *[data] ea = *[register]:1 (&PSW + $(ELEVEL)); build pushC1;}
+pushR1: pushC1        is op10_1=0 & pushC1 {}
+pushC0: ","^pushR1    is op10_1=1 & comma=1 & pushR1 {}
+pushC0: pushR1        is pushR1 {}
+pushR0: "ELR"^pushC0  is op9_1=1 & pushC0 [comma=1;] {SP = SP - 4; ea:3 = zext(SP); *[data] ea = *[register]:3 (&LR + 3 * $(ELEVEL)); build pushC0;}
+pushR0: pushC0        is op9_1=0 & pushC0 [comma=0;] {}
+
+:MOV  Rn,"#"^imm8 is op12_4=0x0 & Rn & imm8 {local z = imm8; Rn = z; affectZS(z);}
+:ADD  Rn,"#"^imm8 is op12_4=0x1 & Rn & imm8 {local x = Rn; local y = imm8; local z = x + y; Rn = z; affectAdd(x,y,z);}
+:AND  Rn,"#"^imm8 is op12_4=0x2 & Rn & imm8 {local z = Rn & imm8; Rn = z; affectZS(z);}
+:OR   Rn,"#"^imm8 is op12_4=0x3 & Rn & imm8 {local z = Rn | imm8; Rn = z; affectZS(z);}
+:XOR  Rn,"#"^imm8 is op12_4=0x4 & Rn & imm8 {local z = Rn ^ imm8; Rn = z; affectZS(z);}
+:CMPC Rn,"#"^imm8 is op12_4=0x5 & Rn & imm8 {local x = Rn; local y = imm8; local c = $(C_flag); local z = x - y - c; affectSubC(x,y,c,z);}
+:ADDC Rn,"#"^imm8 is op12_4=0x6 & Rn & imm8 {local x = Rn; local y = imm8; local c = $(C_flag); local z = x + y + c; Rn = z; affectAddC(x,y,c,z);}
+:CMP  Rn,"#"^imm8 is op12_4=0x7 & Rn & imm8 {local x = Rn; local y = imm8; local z = x - y; affectSub(x,y,z);}
+
+:MOV  Rn,Rm is op12_4=0x8 & op0_4=0x0 & Rn & Rm {local z = Rm; Rn = z; affectZS(z);}
+:ADD  Rn,Rm is op12_4=0x8 & op0_4=0x1 & Rn & Rm {local x = Rn; local y = Rm; local z = x + y; Rn = z; affectAdd(x,y,z);}
+:AND  Rn,Rm is op12_4=0x8 & op0_4=0x2 & Rn & Rm {local z = Rn & Rm; Rn = z; affectZS(z);}
+:OR   Rn,Rm is op12_4=0x8 & op0_4=0x3 & Rn & Rm {local z = Rn | Rm; Rn = z; affectZS(z);}
+:XOR  Rn,Rm is op12_4=0x8 & op0_4=0x4 & Rn & Rm {local z = Rn ^ Rm; Rn = z; affectZS(z);}
+:CMPC Rn,Rm is op12_4=0x8 & op0_4=0x5 & Rn & Rm {local x = Rn; local y = Rm; local c = $(C_flag); local z = x - y - c; affectSubC(x,y,c,z);}
+:ADDC Rn,Rm is op12_4=0x8 & op0_4=0x6 & Rn & Rm {local x = Rn; local y = Rm; local c = $(C_flag); local z = x + y + c; Rn = z; affectAddC(x,y,c,z);}
+:CMP  Rn,Rm is op12_4=0x8 & op0_4=0x7 & Rn & Rm {local x = Rn; local y = Rm; local z = x - y; affectSub(x,y,z);}
+:SUB  Rn,Rm is op12_4=0x8 & op0_4=0x8 & Rn & Rm {local x = Rn; local y = Rm; local z = x - y; Rn = z; affectSub(x,y,z);}
+:SUBC Rn,Rm is op12_4=0x8 & op0_4=0x9 & Rn & Rm {local x = Rn; local y = Rm; local c = $(C_flag); local z = x - y - c; Rn = z; affectSubC(x,y,c,z);}
+:SLL  Rn,Rm is op12_4=0x8 & op0_4=0xA & Rn & Rm {local x = Rn; local y = Rm & 7; local z = x << y; Rn = z; $(C_flag) = (x >> (8 - y)) & 1;}
+:SLLC Rn,Rm is op12_4=0x8 & op0_4=0xB & Rn & Rm & Rprev {local w = Rprev; local x = Rn; local y = Rm & 7; local z = (x << y) | (w >> (8 - y)); Rn = z; $(C_flag) = (x >> (8 - y)) & 1;}
+:SRL  Rn,Rm is op12_4=0x8 & op0_4=0xC & Rn & Rm {local x = Rn; local y = Rm & 7; local z = x >> y; Rn = z; $(C_flag) = (x >> (y - 1)) & 1;}
+:SRLC Rn,Rm is op12_4=0x8 & op0_4=0xD & Rn & Rm & Rnext {local w = Rnext; local x = Rn; local y = Rm & 7; local z = (x >> y) | (w << (8 - y)); Rn = z; $(C_flag) = (x >> (y - 1)) & 1;}
+:SRA  Rn,Rm is op12_4=0x8 & op0_4=0xE & Rn & Rm {local x = Rn; local y = Rm & 7; local z = (x >> y) | -((x & 0x80) >> y); Rn = z; $(C_flag) = (x >> (y - 1)) & 1;}
+:EXTBW ERm  is op12_4=0x8 & op0_4=0xF & op9_3=op5_3 & op8_1=1 & op4_1=0 & Rn & Rm & ERm {local z = Rm; Rn = -(z >> 7); affectZS(z);}
+:DAA  Rn    is op12_4=0x8 & op0_4=0xF & op4_4=1 & Rn {
+	local c = $(C_flag);
+	local h = $(HC_flag);
+	local z = Rn;
+	if ((z << 4) < 0xA0) goto <lowLow>;
+	z = z + 0x06; h = 1; c = c || !(z >> 4); goto <lowDone>;
+<lowLow>
+	if (!h) goto <lowDone>;
+	z = z + 0x06;
+<lowDone>
+	if ((z < 0xA0) && !c) goto <highDone>;
+	z = z + 0x60; c = 1;
+<highDone>
+	Rn = z;
+	$(C_flag) = c;
+	affectZS(z);
+	$(HC_flag) = h;
+}
+:DAS  Rn    is op12_4=0x8 & op0_4=0xF & op4_4=3 & Rn {
+	local c = $(C_flag);
+	local h = $(HC_flag);
+	local z = Rn;
+	if ((z << 4) < 0xA0) goto <lowLow>;
+	z = z - 0x06; h = 1; goto <lowDone>;
+<lowLow>
+	if (!h) goto <lowDone>;
+	c = c || (z < 0x06);
+	z = z - 0x06;
+<lowDone>
+	if ((z < 0xA0) && !c) goto <highDone>;
+	z = z - 0x60; c = 1;
+<highDone>
+	Rn = z;
+	$(C_flag) = c;
+	affectZS(z);
+	$(HC_flag) = h;
+}
+:NEG  Rn    is op12_4=0x8 & op0_4=0xF & op4_4=5 & Rn {local z = -Rn; Rn = z; affectNeg(z);}
+
+:L    Rn,mLST     is (op12_4=0x9 & op0_3=0x0 & Rn) ... & mLST {z = mLST; Rn = z; affectZS(z);}
+:ST   Rn,mLST     is (op12_4=0x9 & op0_3=0x1 & Rn) ... & mLST {mLST = Rn;}
+:L    ERn,EmLST   is (op12_4=0x9 & op0_4=0x2 & ERn) ... & EmLST {z = EmLST; ERn = z; affectZS(z);}
+:ST   ERn,EmLST   is (op12_4=0x9 & op0_4=0x3 & ERn) ... & EmLST {EmLST = ERn;}
+:L    XRn,XmLST   is (op12_4=0x9 & op0_4=0x4 & op4_1=1 & op5_2!=0 & XRn) ... & XmLST {z = XmLST; XRn = z; affectZS(z);}
+:ST   XRn,XmLST   is (op12_4=0x9 & op0_4=0x5 & op4_1=1 & op5_2!=0 & XRn) ... & XmLST {XmLST = XRn;}
+:L    QRn,QmLST   is (op12_4=0x9 & op0_4=0x6 & op4_1=1 & op5_2!=0 & QRn) ... & QmLST {z = QmLST; QRn = z; affectZS(z);}
+:ST   QRn,QmLST   is (op12_4=0x9 & op0_4=0x7 & op4_1=1 & op5_2!=0 & QRn) ... & QmLST {QmLST = QRn;}
+:SLL  Rn,"#"^imm3 is op12_4=0x9 & op0_4=0xA & op7_1=0 & Rn & imm3 {local x = Rn; local y = imm3; local z = x << y; Rn = z; $(C_flag) = (x >> (8 - y)) & 1;}
+:SLLC Rn,"#"^imm3 is op12_4=0x9 & op0_4=0xB & op7_1=0 & Rn & imm3 & Rprev {local w = Rprev; local x = Rn; local y = imm3; local z = (x << y) | (w >> (8 - y)); Rn = z; $(C_flag) = (x >> (8 - y)) & 1;}
+:SRL  Rn,"#"^imm3 is op12_4=0x9 & op0_4=0xC & op7_1=0 & Rn & imm3 {local x = Rn; local y = imm3; local z = x >> y; Rn = z; $(C_flag) = (x >> (y - 1)) & 1;}
+:SRLC Rn,"#"^imm3 is op12_4=0x9 & op0_4=0xD & op7_1=0 & Rn & imm3 & Rnext {local w = Rnext; local x = Rn; local y = imm3; local z = (x >> y) | (w << (8 - y)); Rn = z; $(C_flag) = (x >> (y - 1)) & 1;}
+:SRA  Rn,"#"^imm3 is op12_4=0x9 & op0_4=0xE & op7_1=0 & Rn & imm3 {local x = Rn; local y = imm3; local z = (x >> y) | -((x & 0x80) >> y); Rn = z; $(C_flag) = (x >> (y - 1)) & 1;}
+:^instruction     is op12_4=0x9 & op0_4=0xF & op8_4=0x0 & op4_4 & Rm; instruction [dsr=1; imm8dsr=op4_4;] {*[data]:1 (0xF000:3) = Rm; build instruction;}
+
+:SB  Rn^"."^imm3           is op12_4=0xA & op0_4=0x0 & op7_1=0 & imm3 & orMask & Rn {z = Rn; $(Z_flag) = !(z & orMask); z = z | orMask; Rn = z;}
+:SB  prefix^imm16^"."^imm3 is op12_4=0xA & op0_4=0x0 & op7_1=1 & imm3 & orMask & prefix; imm16 {ea:3 = segment(prefix,imm16:2); z = *[data]:1 ea; $(Z_flag) = !(z & orMask); z = z | orMask; *[data] ea = z;}
+:TB  Rn^"."^imm3           is op12_4=0xA & op0_4=0x1 & op7_1=0 & imm3 & orMask & Rn {$(Z_flag) = !(Rn & orMask);}
+:TB  prefix^imm16^"."^imm3 is op12_4=0xA & op0_4=0x1 & op7_1=1 & imm3 & orMask & prefix; imm16 {ea:3 = segment(prefix,imm16:2); $(Z_flag) = !((*[data]:1 ea) & orMask);}
+:RB  Rn^"."^imm3           is op12_4=0xA & op0_4=0x2 & op7_1=0 & imm3 & orMask & andMask & Rn {z = Rn; $(Z_flag) = !(z & orMask); z = z & andMask; Rn = z;}
+:RB  prefix^imm16^"."^imm3 is op12_4=0xA & op0_4=0x2 & op7_1=1 & imm3 & orMask & andMask & prefix; imm16 {ea:3 = segment(prefix,imm16:2); z = *[data]:1 ea; $(Z_flag) = !(z & orMask); z = z & andMask; *[data] ea = z;}
+:MOV Rn,"PSW"              is op12_4=0xA & op0_4=0x3 & op4_4=0x0 & Rn {Rn = PSW;}
+:MOV Rn,"EPSW"             is op12_4=0xA & op0_4=0x4 & op4_4=0x0 & Rn {if(!$(ELEVEL)) goto <zero>; Rn = *[register] (&PSW + $(ELEVEL)); goto <done>; <zero> Rn = 0xFF; <done>}
+:MOV ERn,"ELR"             is op12_4=0xA & op0_4=0x5 & op4_4=0x0 & ERn {ERn = *[register]:2 (&LR + (3 * $(ELEVEL)));}
+:MOV Rn,CRm                is op12_4=0xA & op0_4=0x6 & Rn & CRm {Rn = CRm;}
+:MOV Rn,"ECSR"             is op12_4=0xA & op0_4=0x7 & op4_4=0x0 & Rn {Rn = *[register] (&LR + (3 * $(ELEVEL)) + 2);}
+:L   ERn,EmLST             is (op12_4=0xA & op0_4=0x8 & ERn) ... & EmLST {z = EmLST; ERn = z; affectZS(z);}
+:ST  ERn,EmLST             is (op12_4=0xA & op0_4=0x9 & ERn) ... & EmLST {EmLST = ERn;}
+:MOV ERn,"SP"              is op12_4=0xA & op0_4=0xA & op4_4=0x1 & ERn {ERn = SP;}
+:MOV "SP",ERm              is op12_4=0xA & op0_4=0xA & op8_4=0x1 & ERm {SP = ERm;}
+:MOV "PSW",Rm              is op12_4=0xA & op0_4=0xB & op8_4=0x0 & Rm {PSW = Rm;}
+:MOV "EPSW",Rm             is op12_4=0xA & op0_4=0xC & op8_4=0x0 & Rm {if(!$(ELEVEL)) goto <done>; *[register] (&PSW + $(ELEVEL)) = Rm; <done>}
+:MOV "ELR",ERn             is op12_4=0xA & op0_4=0xD & op4_4=0x0 & ERn {*[register] (&LR + (3 * $(ELEVEL))) = ERn & 0xFFFE;}
+:MOV CRn,Rm                is op12_4=0xA & op0_4=0xE & CRn & Rm {CRn = Rm;}
+:MOV "ECSR",Rm             is op12_4=0xA & op0_4=0xF & op8_4=0x0 & Rm {*[register] (&LR + (3 * $(ELEVEL)) + 2) = Rm;}
+
+:L  ERn,eaFBP is op12_4=0xB & op7_1=0 & ERn & eaFBP {z = *[data]:2 eaFBP; ERn = z; affectZS(z);}
+:ST ERn,eaFBP is op12_4=0xB & op7_1=1 & ERn & eaFBP {*[data]:2 eaFBP = ERn;}
+
+:B^cc rel8 is op12_4 = 0xC & cc & rel8 {if(cc) goto rel8;}
+:BAL  rel8 is op12_4 = 0xC & op8_4=0xE & rel8 {goto rel8;}
+
+:L  Rn,eaFBP is op12_4=0xD & op7_1=0 & Rn & eaFBP {z = *[data]:1 eaFBP; Rn = z; affectZS(z);}
+:ST Rn,eaFBP is op12_4=0xD & op7_1=1 & Rn & eaFBP {*[data]:1 eaFBP = Rn;}
+
+:MOV ERn,"#"^simm7 is op12_4=0xE & op8_1=0 & op7_1=0 & ERn & simm7 {local z = simm7; ERn = z; affectZS(z);}
+:ADD ERn,"#"^simm7 is op12_4=0xE & op8_1=0 & op7_1=1 & ERn & simm7 {local x = ERn; local y = simm7; local z = x + y; ERn = z; affectAdd(x,y,z);}
+:ADD "SP,#"^simm8  is op12_4=0xE & op8_4=0x1 & simm8 {SP = SP + simm8;}
+:^instruction      is op12_4=0xE & op8_4=0x3 & imm8; instruction [dsr=2; imm8dsr=imm8;] {*[data]:1 (0xF000:3) = imm8; build instruction;}
+:SWI "#"^imm6      is op12_4=0xE & op8_4=0x5 & imm6 {EPSW1 = PSW; PSW = (PSW & 0xF4) | 1; ELR1 = inst_next; call [*[data]:2 ((0x80:3) | (imm6 << 1))];}
+:MOV "PSW,#"^imm8  is op12_4=0xE & op8_4=0x9 & imm8 {PSW = imm8;}
+:RC                is op0_16=0xEB7F {$(C_flag) = 0;}
+:DI                is op0_16=0xEBF7 {$(MIE_flag) = 0;}
+:EI                is op0_16=0xED08 {$(MIE_flag) = 1;}
+:SC                is op0_16=0xED80 {$(C_flag) = 1;}
+
+:B    eaB          is (op12_4=0xF & op2_2=0 & op0_1=0 & op1_1=0) ... & eaB {goto eaB;}
+:B    eaB          is (op12_4=0xF & op2_2=0 & op0_1=0 & op1_1=1) ... & eaB {goto [eaB];}
+:BL   eaB          is (op12_4=0xF & op2_2=0 & op0_1=1 & op1_1=0) ... & eaB {LR = inst_next; call eaB;}
+:BL   eaB          is (op12_4=0xF & op2_2=0 & op0_1=1 & op1_1=1) ... & eaB {LR = inst_next; call [eaB];}
+:MUL  ERn,Rm       is op12_4=0xF & op0_4=0x4 & ERn & Rm {local x = ERn & 0xFF; local y = zext(Rm); local z = x * y; ERn = z; $(Z_flag) = z == 0;}
+:MOV  ERn,ERm      is op12_4=0xF & op0_4=0x5 & ERn & ERm {local z = ERm; ERn = z; affectZS(z);}
+:ADD  ERn,ERm      is op12_4=0xF & op0_4=0x6 & ERn & ERm {local x = ERn; local y = ERm; local z = x + y; ERn = z; affectAdd(x,y,z);}
+:CMP  ERn,ERm      is op12_4=0xF & op0_4=0x7 & ERn & ERm {local x = ERn; local y = ERm; local z = x - y; affectSub(x,y,z);}
+:DIV  ERn,Rm       is op12_4=0xF & op0_4=0x9 & ERn & Rm {local x = ERn; local y = zext(Rm); $(C_flag) = x == 0; if($(C_flag)) goto <done>; local z = x / y; ERn = z; local q = x % y; Rm = q:1; <done> $(Z_flag) = ERn == 0;}
+:LEA  [ERm]        is op12_4=0xF & op0_4=0xA & op8_4=0x0 & ERm {EA = ERm;}
+:LEA  imm16^[ERm]  is op12_4=0xF & op0_4=0xB & op8_4=0x0 & ERm; imm16 {ea = ERm + imm16; sea:3 = segment(0:1,ea); z = *[data]:1 sea; EA = ea;}
+:LEA  imm16        is op12_4=0xF & op0_4=0xC & op8_4=0x0 & op4_4=0x0; imm16 {z = *[data]:1 (imm16:3); EA = imm16;}
+:MOV  CRn,eaMOV    is op12_4=0xF & op0_4=0xD & op5_3=0 & CRn & eaMOV {CRn = *[data] eaMOV;}
+:MOV  CERn,eaMOV   is op12_4=0xF & op0_4=0xD & op5_3=1 & CERn & eaMOV {CERn = *[data] eaMOV;}
+:MOV  CXRn,eaMOV   is op12_4=0xF & op0_4=0xD & op5_3=2 & CXRn & eaMOV {CXRn = *[data] eaMOV;}
+:MOV  CQRn,eaMOV   is op12_4=0xF & op0_4=0xD & op5_3=3 & CQRn & eaMOV {CQRn = *[data] eaMOV;}
+:MOV  eaMOV,CRn    is op12_4=0xF & op0_4=0xD & op5_3=4 & CRn & eaMOV {*[data] eaMOV = CRn;}
+:MOV  eaMOV,CERn   is op12_4=0xF & op0_4=0xD & op5_3=5 & CERn & eaMOV {*[data] eaMOV = CERn;}
+:MOV  eaMOV,CXRn   is op12_4=0xF & op0_4=0xD & op5_3=6 & CXRn & eaMOV {*[data] eaMOV = CXRn;}
+:MOV  eaMOV,CQRn   is op12_4=0xF & op0_4=0xD & op5_3=7 & CQRn & eaMOV {*[data] eaMOV = CQRn;}
+:POP  Rn           is op12_4=0xF & op0_4=0xE & op4_4=0x0 & Rn {ea:3 = zext(SP); Rn = *[data] ea; SP = SP + 2;}
+:POP  ERn          is op12_4=0xF & op0_4=0xE & op4_4=0x1 & ERn {ea:3 = zext(SP); ERn = *[data] ea; SP = SP + 2;}
+:POP  XRn          is op12_4=0xF & op0_4=0xE & op4_4=0x2 & XRn {ea:3 = zext(SP); XRn = *[data] ea; SP = SP + 4;}
+:POP  QRn          is op12_4=0xF & op0_4=0xE & op4_4=0x3 & QRn {ea:3 = zext(SP); QRn = *[data] ea; SP = SP + 8;}
+:PUSH Rn           is op12_4=0xF & op0_4=0xE & op4_4=0x4 & Rn {SP = SP - 2; ea:3 = zext(SP); *[data] ea = Rn;}
+:PUSH ERn          is op12_4=0xF & op0_4=0xE & op4_4=0x5 & ERn {SP = SP - 2; ea:3 = zext(SP); *[data] ea = ERn;}
+:PUSH XRn          is op12_4=0xF & op0_4=0xE & op4_4=0x6 & XRn {SP = SP - 4; ea:3 = zext(SP); *[data] ea = XRn;}
+:PUSH QRn          is op12_4=0xF & op0_4=0xE & op4_4=0x7 & QRn {SP = SP - 8; ea:3 = zext(SP); *[data] ea = QRn;}
+:POP  popR0        is op12_4=0xF & op0_4=0xE & op4_4=0x8 & popR0 {}
+:PUSH pushR0       is op12_4=0xF & op0_4=0xE & op4_4=0xC & pushR0 {}
+:RTI               is op0_16=0xFE0F {l = $(ELEVEL); PSW = *[register] (&PSW + l); return [*[register]:3 (&LR + (3 * l))];}
+:RT                is op0_16=0xFE1F {return [LR];}
+:INC  eaEA         is op0_16=0xFE2F & eaEA {ea = eaEA; local x:1 = *[data] ea; local z = x + 1; *[data] ea = z; affectZS(z); $(OV_flag) = x == 0x7F; $(HC_flag) = (x << 4) == 0xF0;}
+:DEC  eaEA         is op0_16=0xFE3F & eaEA {ea = eaEA; local x:1 = *[data] ea; local z = x - 1; *[data] ea = z; affectZS(z); $(OV_flag) = x == 0x80; $(HC_flag) = !(x << 4);}
+:NOP               is op0_16=0xFE8F {}
+:^instruction      is op0_16=0xFE9F; instruction [dsr=3;] {build instruction;}
+:CPLC              is op0_16=0xFECF {$(C_flag) = !$(C_flag);}
+:BRK               is op0_16=0xFFFF {
+	if($(ELEVEL) < 2) goto <break>;
+	PSW = 0x00;
+	*[data]:1 (0xF000:3) = 0x00;
+	SP = *[data]:2 (0x0000:3);
+	goto [*[data]:2 (0x0002:3)];
+<break>
+	EPSW2 = PSW;
+	PSW = (PSW & 0xF4) | 2;
+	ELR2 = inst_next;
+	call [*[data]:2 (0x0004:3)];
+}

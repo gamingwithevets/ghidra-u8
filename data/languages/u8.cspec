@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<compiler_spec>
+  <data_organization>
+  	<pointer_size value="2" />
+  	<integer_size value="2" />
+  	<long_size value="4" />
+  	<long_long_size value="8" />
+  	<float_size value="8" />
+  	<size_alignment_map>
+  		<entry size="1" alignment="1" />
+  		<entry size="2" alignment="2" />
+  		<entry size="4" alignment="2" />
+  		<entry size="8" alignment="2" />
+  	</size_alignment_map>
+  </data_organization>
+  <global>
+    <range space="code"/>
+    <range space="data"/>
+  </global>
+  <stackpointer register="SP" space="data" growth="negative"/>
+  <funcptr align="2"/>
+  <returnaddress>
+  	<register name="LR"/>
+  </returnaddress>
+  <default_proto>
+    <prototype name="__u8" extrapop="0" stackshift="0">
+      <input>
+        <pentry minsize="1" maxsize="2">
+          <register name="ER0"/>
+        </pentry>
+        <pentry minsize="1" maxsize="2">
+          <register name="ER2"/>
+        </pentry>
+        <pentry minsize="1" maxsize="500">
+          <addr offset="0" space="stack"/>
+        </pentry>
+      </input>
+      <output>
+        <pentry minsize="1" maxsize="4">
+          <register name="XR0"/>
+        </pentry>
+      </output>
+      <killedbycall>
+      	<register name="EA"/>
+      </killedbycall>
+    </prototype>
+  </default_proto>
+</compiler_spec>
