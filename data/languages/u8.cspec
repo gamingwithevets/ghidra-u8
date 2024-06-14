@@ -2,6 +2,7 @@
 
 <compiler_spec>
 	<data_organization>
+		<default_alignment value="2" />
 		<pointer_size value="2" />
 		<integer_size value="2" />
 		<long_size value="4" />
@@ -43,6 +44,7 @@
 			</output>
 			<killedbycall>
 				<register name="EA"/>
+				<register name="LR"/>
 			</killedbycall>
 			<unaffected>
 				<register name="XR4"/>
